@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invoice Portal</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mut:#667085;--bd:#e3e6eb;--pri:#2457d6;--ok:#12805c;--bad:#c2331f}
+@media(prefers-color-scheme:dark){:root{--bg:#10131a;--card:#181c25;--tx:#e8ebf0;--mut:#9aa3b2;--bd:#2a303c;--pri:#6b93ff;--ok:#3ecf9b;--bad:#ff7a68}}
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:2}
+nav b{margin-right:12px;align-self:center}nav button{border:0;background:none;color:var(--mut);padding:7px 11px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:var(--pri);color:#fff}main{max-width:1050px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px}
+h2{margin:0 0 12px;font-size:18px}h3{margin:16px 0 8px;font-size:15px}
+table{width:100%;border-collapse:collapse}th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
+th{color:var(--mut);font-weight:600;font-size:12px}.r{text-align:right;font-variant-numeric:tabular-nums}
+input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);width:100%}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+button.b{background:var(--pri);color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font:inherit}button.b.s{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+button.b.d{background:var(--bad)}.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.k div{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px}.k small{color:var(--mut)}.k b{display:block;font-size:22px;margin-top:4px}
+.tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--bd)}.paid{color:var(--ok)}.over{color:var(--bad)}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:8px;color:#fff;display:none;z-index:9;max-width:90vw}
+.row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.row>*{flex:1;min-width:130px}.row>button{flex:0}.tot td{border:0}.ok{color:var(--ok)}.no{color:var(--bad)}
+.scroll{overflow-x:auto}.hint{color:var(--mut);font-size:12px}
+</style></head><body>
+<nav><b>🧾 Invoice Portal</b>
+<button data-t="dash">Dashboard</button><button data-t="new">New Invoice</button><button data-t="inv">Invoices</button>
+<button data-t="pay">Payments</button><button data-t="exp">Expenses</button><button data-t="cli">Clients</button><button data-t="itm">Items</button>
+<button data-t="rep">Reports</button><button data-t="set">Settings</button></nav>
+<main id="v"></main><div id="toast"></div>
+<script>
+const $=(s,e=document)=>e.querySelector(s), $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=p=>(p/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+let META,S;
+async function api(url,method='GET',data){
+  const r=await fetch(url,{method,headers:{'content-type':'application/json'},body:data?JSON.stringify(data):undefined});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j;}
+function toast(m,err){const t=$('#toast');t.textContent=m;t.style.background=err?'var(--bad)':'var(--ok)';t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',err?5000:2500);}
+const guard=fn=>async(...a)=>{try{await fn(...a)}catch(e){toast(e.message,1)}};
+const form=el=>Object.fromEntries($$('[name]',el).map(i=>[i.name,i.type==='checkbox'?i.checked:i.value]));
+const opts=(arr,v,l,sel)=>arr.map(x=>`<option value="${esc(x[v])}"${String(x[v])===String(sel)?' selected':''}>${esc(x[l])}</option>`).join('');
+const stateOpts=sel=>Object.entries(META.states).map(([c,n])=>`<option value="${c}"${c===sel?' selected':''}>${c} - ${n}</option>`).join('');
+const badge=s=>`<span class="tag ${s==='paid'?'paid':s.includes('overdue')?'over':''}">${s}</span>`;
+const V=$('#v');
+const tabs={dash,new:newInv,inv:invList,pay,exp,cli,itm,rep,set};
+function go(t){$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));guard(tabs[t])();location.hash=t;}
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+
+async function dash(){const d=await api('/api/dashboard'),p=d.pnl;
+V.innerHTML=`<div class=k><div><small>Invoices this month (${d.month})</small><b>${d.invoices_this_month}</b></div>
+<div><small>Billed this month</small><b>₹${inr(d.billed_this_month_paise)}</b></div>
+<div><small>Outstanding (to collect)</small><b>₹${inr(d.outstanding_paise)}</b></div>
+<div><small>Overdue</small><b class=no>₹${inr(d.overdue_paise)}</b></div></div>
+<div class=card><h2>This financial year (${d.fy.from} → today)</h2>
+<div class=k><div><small>Income</small><b>₹${inr(p.total_income)}</b></div><div><small>Expenses</small><b>₹${inr(p.total_expenses)}</b></div>
+<div><small>Net profit</small><b class="${p.net_profit<0?'no':'ok'}">₹${inr(p.net_profit)}</b></div></div></div>
+<div class=card><h2>Shuru kaise karein</h2><ol><li>Settings me apni company ka naam, GSTIN, state bharo</li><li>Clients aur Items (services + rate + GST) ek baar add karo</li>
+<li>New Invoice me sirf dropdown se client/item chuno - baaki sab (GST, total, number) khud banta hai</li><li>Paise aaye to Payments me entry karo; kharche Expenses me</li><li>Reports me P&amp;L, Balance Sheet, Trial Balance tayyar milega</li></ol></div>`;}
+
+async function newInv(pre={}){
+const [cl,it]=await Promise.all([api('/api/clients'),api('/api/items')]);
+if(!cl.length||!it.length){V.innerHTML=`<div class=card>Pehle ${cl.length?'':'<b>Client</b> '}${!cl.length&&!it.length?'aur ':''}${it.length?'':'<b>Item</b> '}add karo (Clients / Items tab).</div>`;return;}
+V.innerHTML=`<div class=card><h2>New Invoice</h2><div class=g>
+<div><label>Client</label><select id=c><option value="">-- chuno --</option>${opts(cl,'id','name',pre.client_id)}</select></div>
+<div><label>Invoice date</label><input type=date id=d value="${META.today}"></div>
+<div><label>Due date (blank = default days)</label><input type=date id=due></div></div>
+<div class=row style="margin-top:8px"><span class=hint id=lastinfo></span><button class="b s" id=rep style="display:none">↻ Pichla invoice repeat karo</button></div>
+<h3>Items</h3><div class=scroll><table id=lt><thead><tr><th style="width:36%">Item</th><th>Qty</th><th>Rate ₹</th><th>GST %</th><th class=r>Amount</th><th></th></tr></thead><tbody></tbody></table></div>
+<button class="b s" id=addl>+ Line</button>
+<div class=g style="margin-top:12px"><div><label>Notes (optional)</label><textarea id=n rows=2></textarea></div>
+<div><table class=tot id=tt></table></div></div>
+<p><button class=b id=save>Invoice banao</button></p></div>`;
+const tb=$('#lt tbody');
+const line=(l={})=>{const tr=document.createElement('tr');
+tr.innerHTML=`<td><select name=item_id><option value="">-- item --</option>${opts(it,'id','name',l.item_id)}</select></td>
+<td><input name=qty type=number step=0.01 min=0.01 value="${l.qty??1}"></td><td><input name=rate type=number step=0.01 min=0 value="${l.rate??''}"></td>
+<td><select name=gst_rate>${META.gst_rates.map(g=>`<option${g==l.gst_rate?' selected':''}>${g}</option>`).join('')}</select></td>
+<td class="r amt">0.00</td><td><button class="b s x">✕</button></td>`;
+const sel=$('[name=item_id]',tr);
+sel.onchange=()=>{const i=it.find(x=>x.id==sel.value);if(i){$('[name=rate]',tr).value=(i.rate_paise/100).toFixed(2);$('[name=gst_rate]',tr).value=i.gst_rate;}calc();};
+$$('input,select',tr).forEach(e=>e.oninput=calc);$('.x',tr).onclick=()=>{if(tb.children.length>1){tr.remove();calc();}};
+tb.append(tr);return tr;};
+// mirrors server maths exactly (integer paise) - server is the source of truth
+const dr=(a,b)=>Math.floor((2*a+b)/(2*b)), pp=v=>{const s=String(v||'0');const [r,f='']=s.split('.');return Number(r)*100+Number((f+'00').slice(0,2));};
+function calc(){const cs=cl.find(x=>x.id==$('#c').value);const intra=cs&&cs.state_code===S.state_code;
+let sub=0,c=0,s=0,i=0;$$('tr',tb).forEach(tr=>{const it2=it.find(x=>x.id==$('[name=item_id]',tr).value);const q=pp($('[name=qty]',tr).value),r=pp($('[name=rate]',tr).value);
+const a=dr(q*r,100),g=S.gst_enabled==='1'?+$('[name=gst_rate]',tr).value:0,t=dr(a*g,100);sub+=a;if(intra){c+=Math.floor(t/2);s+=t-Math.floor(t/2)}else i+=t;$('.amt',tr).textContent=inr(a);});
+$('#tt').innerHTML=`<tr><td>Taxable</td><td class=r>${inr(sub)}</td></tr>${intra?`<tr><td>CGST</td><td class=r>${inr(c)}</td></tr><tr><td>SGST</td><td class=r>${inr(s)}</td></tr>`:`<tr><td>IGST</td><td class=r>${inr(i)}</td></tr>`}
+<tr><td><b>Total</b></td><td class=r><b>₹${inr(sub+c+s+i)}</b></td></tr>`;}
+$('#addl').onclick=()=>{line();calc();};
+$('#c').onchange=guard(async()=>{calc();const id=$('#c').value;$('#rep').style.display='none';$('#lastinfo').textContent='';if(!id)return;
+const last=(await api('/api/invoices?client='+id+'&limit=1'))[0];if(last){$('#lastinfo').textContent=`Last invoice: ${last.number} (₹${inr(last.total_paise)})`;$('#rep').style.display='';
+$('#rep').onclick=guard(async()=>{const d=await api('/api/invoices/'+last.id);tb.innerHTML='';
+d.lines.forEach(l=>{const m=it.find(x=>x.name===l.description);const tr=line({item_id:m?.id,qty:l.qty100/100,rate:(l.rate_paise/100).toFixed(2),gst_rate:l.gst_rate});});calc();toast('Pichle invoice ki lines load ho gayi');});}});
+(pre.lines||[{}]).forEach(line);calc();
+$('#save').onclick=guard(async()=>{const lines=$$('tr',tb).map(tr=>{const f=form(tr);return{item_id:f.item_id,qty:f.qty,rate:f.rate,gst_rate:f.gst_rate}});
+const r=await api('/api/invoices','POST',{client_id:$('#c').value,date:$('#d').value,due_date:$('#due').value||undefined,notes:$('#n').value,lines});
+toast(`${r.number} ban gaya - ₹${inr(r.total_paise)}`);window.open('/invoice/'+r.id,'_blank');go('inv');});}
+
+async function invList(){const m=META.today.slice(0,7);
+V.innerHTML=`<div class=card><h2>Invoices</h2><div class=row><div><label>Month</label><input type=month id=m value="${m}"></div>
+<div><label>Client</label><select id=fc></select></div><div><label>Status</label><select id=fs><option value="">All</option><option>unpaid</option><option>partial</option><option>paid</option><option>cancelled</option></select></div>
+<button class="b s" id=csv>⬇ CSV</button></div><div class=scroll id=l></div><p class=hint id=sum></p></div>`;
+const cl=await api('/api/clients');$('#fc').innerHTML='<option value="">All</option>'+opts(cl,'id','name');
+const load=guard(async()=>{const q=new URLSearchParams({month:$('#m').value,client:$('#fc').value,status:$('#fs').value});[...q].forEach(([k,v])=>!v&&q.delete(k));
+const rows=await api('/api/invoices?'+q);const live=rows.filter(r=>r.status!=='cancelled');
+$('#sum').textContent=`${rows.length} invoices · Billed ₹${inr(live.reduce((s,r)=>s+r.total_paise,0))} · Baaki ₹${inr(live.reduce((s,r)=>s+r.balance_paise,0))}`;
+$('#l').innerHTML=`<table><tr><th>No.</th><th>Date</th><th>Client</th><th class=r>Total</th><th class=r>Balance</th><th>Status</th><th></th></tr>${rows.map(r=>`<tr><td>${esc(r.number)}</td><td>${r.date}</td><td>${esc(r.client_name)}</td><td class=r>${inr(r.total_paise)}</td><td class=r>${inr(r.balance_paise)}</td><td>${badge(r.pay_status)}</td>
+<td><a href="/invoice/${r.id}" target=_blank>Print</a>${r.pay_status==='unpaid'||r.pay_status==='unpaid-overdue'?` · <a href=# data-c=${r.id}>Cancel</a>`:''}</td></tr>`).join('')||'<tr><td colspan=7>Koi invoice nahi</td></tr>'}</table>`;
+$$('[data-c]').forEach(a=>a.onclick=guard(async e=>{e.preventDefault();if(confirm('Invoice cancel karein? (number reserved rahega, books me reverse entry banegi)')){await api(`/api/invoices/${a.dataset.c}/cancel`,'POST');toast('Cancel ho gaya');load();}}));});
+['m','fc','fs'].forEach(i=>$('#'+i).onchange=load);$('#csv').onclick=()=>location.href='/api/export/invoices.csv?month='+$('#m').value;load();}
+
+async function pay(){const [inv,ps]=await Promise.all([api('/api/invoices'),api('/api/payments')]);const open=inv.filter(i=>i.balance_paise>0);
+V.innerHTML=`<div class=card><h2>Payment mili</h2><div class=row id=f><div><label>Invoice</label><select name=invoice_id>${open.map(i=>`<option value=${i.id} data-b=${i.balance_paise}>${esc(i.number)} - ${esc(i.client_name)} (baaki ₹${inr(i.balance_paise)})</option>`).join('')||'<option value="">Koi pending invoice nahi</option>'}</select></div>
+<div><label>Date</label><input type=date name=date value="${META.today}"></div><div><label>Amount ₹</label><input name=amount type=number step=0.01 min=0.01></div>
+<div><label>Mode</label><select name=mode><option>bank</option><option>cash</option></select></div><div><label>Reference</label><input name=ref></div><button class=b id=s>Save</button></div>
+<button class="b s" id=full style="margin-top:8px">Poora balance bharo</button></div>
+<div class=card><h2>Received payments</h2><div class=scroll><table><tr><th>Date</th><th>Invoice</th><th>Client</th><th>Mode</th><th>Ref</th><th class=r>Amount</th></tr>${ps.map(p=>`<tr><td>${p.date}</td><td>${esc(p.number)}</td><td>${esc(p.client_name)}</td><td>${p.mode}</td><td>${esc(p.ref)}</td><td class=r>${inr(p.amount_paise)}</td></tr>`).join('')}</table></div></div>`;
+$('#full').onclick=()=>{const o=$('[name=invoice_id]').selectedOptions[0];if(o)$('[name=amount]').value=(o.dataset.b/100).toFixed(2);};
+$('#s').onclick=guard(async()=>{await api('/api/payments','POST',form($('#f')));toast('Payment save ho gayi');pay();});}
+
+async function exp(){const es=await api('/api/expenses');const cats=META.accounts.filter(a=>META.expense_codes.includes(a[0])).map(a=>({c:a[0],n:a[1]}));
+V.innerHTML=`<div class=card><h2>Kharcha (Expense)</h2><div class=row id=f><div><label>Date</label><input type=date name=date value="${META.today}"></div>
+<div><label>Category</label><select name=account_code>${opts(cats,'c','n')}</select></div><div><label>Amount ₹</label><input name=amount type=number step=0.01 min=0.01></div>
+<div><label>Mode</label><select name=mode><option>bank</option><option>cash</option></select></div><div><label>Vendor</label><input name=vendor></div><div><label>Note</label><input name=note></div><button class=b id=s>Save</button></div></div>
+<div class=card><h2>Opening capital / paisa lagaya</h2><div class=row id=cf><div><label>Date</label><input type=date name=date value="${META.today}"></div><div><label>Amount ₹</label><input name=amount type=number step=0.01 min=0.01></div>
+<div><label>Mode</label><select name=mode><option>bank</option><option>cash</option></select></div><button class="b s" id=cs>Add</button></div>
+<p class=hint>Business me jo paisa owner ne lagaya hai - balance sheet ke liye.</p></div>
+<div class=card><div class=scroll><table><tr><th>Date</th><th>Category</th><th>Vendor</th><th>Note</th><th>Mode</th><th class=r>Amount</th></tr>${es.map(e=>`<tr><td>${e.date}</td><td>${esc(e.account_name)}</td><td>${esc(e.vendor)}</td><td>${esc(e.note)}</td><td>${e.mode}</td><td class=r>${inr(e.amount_paise)}</td></tr>`).join('')}</table></div></div>`;
+$('#s').onclick=guard(async()=>{await api('/api/expenses','POST',form($('#f')));toast('Expense save ho gaya');exp();});
+$('#cs').onclick=guard(async()=>{await api('/api/capital','POST',form($('#cf')));toast('Capital add ho gaya');exp();});}
+
+async function cli(){const cs=await api('/api/clients');
+V.innerHTML=`<div class=card><h2>Client add / edit</h2><div class=g id=f><input type=hidden name=id><div><label>Naam *</label><input name=name></div>
+<div><label>State * (GST ke liye)</label><select name=state_code>${stateOpts(S.state_code)}</select></div><div><label>GSTIN</label><input name=gstin maxlength=15></div>
+<div><label>Email</label><input name=email></div><div><label>Phone</label><input name=phone></div><div><label>Address</label><input name=address></div></div>
+<p><button class=b id=s>Save</button> <button class="b s" id=cl>Clear</button></p></div>
+<div class=card><div class=scroll><table><tr><th>Naam</th><th>State</th><th>GSTIN</th><th>Email</th><th></th></tr>${cs.map(c=>`<tr><td>${esc(c.name)}</td><td>${META.states[c.state_code]}</td><td>${esc(c.gstin)}</td><td>${esc(c.email)}</td><td><a href=# data-e=${c.id}>Edit</a></td></tr>`).join('')}</table></div></div>`;
+$('#cl').onclick=()=>cli();
+$$('[data-e]').forEach(a=>a.onclick=e=>{e.preventDefault();const c=cs.find(x=>x.id==a.dataset.e);$$('[name]',$('#f')).forEach(i=>i.value=c[i.name]??'');scrollTo(0,0);});
+$('#s').onclick=guard(async()=>{const f=form($('#f'));f.id?await api('/api/clients/'+f.id,'PUT',f):await api('/api/clients','POST',f);toast('Client save ho gaya');cli();});}
+
+async function itm(){const is=await api('/api/items');
+V.innerHTML=`<div class=card><h2>Item / Service add / edit</h2><div class=g id=f><input type=hidden name=id><div><label>Naam *</label><input name=name></div><div><label>HSN/SAC</label><input name=hsn></div>
+<div><label>Rate ₹ *</label><input name=rate type=number step=0.01 min=0></div><div><label>GST % *</label><select name=gst_rate>${META.gst_rates.map(g=>`<option${g===18?' selected':''}>${g}</option>`).join('')}</select></div></div>
+<p><button class=b id=s>Save</button> <button class="b s" id=cl>Clear</button></p></div>
+<div class=card><table><tr><th>Item</th><th>HSN/SAC</th><th class=r>Rate</th><th class=r>GST</th><th></th></tr>${is.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.hsn)}</td><td class=r>${inr(i.rate_paise)}</td><td class=r>${i.gst_rate}%</td><td><a href=# data-e=${i.id}>Edit</a></td></tr>`).join('')}</table></div>`;
+$('#cl').onclick=()=>itm();
+$$('[data-e]').forEach(a=>a.onclick=e=>{e.preventDefault();const i=is.find(x=>x.id==a.dataset.e);const f=$('#f');f.querySelector('[name=id]').value=i.id;f.querySelector('[name=name]').value=i.name;f.querySelector('[name=hsn]').value=i.hsn||'';f.querySelector('[name=rate]').value=(i.rate_paise/100).toFixed(2);f.querySelector('[name=gst_rate]').value=i.gst_rate;});
+$('#s').onclick=guard(async()=>{const f=form($('#f'));f.id?await api('/api/items/'+f.id,'PUT',f):await api('/api/items','POST',f);toast('Item save ho gaya');itm();});}
+
+async function rep(){const fy=META.fy;
+V.innerHTML=`<div class=card><div class=row><div><label>From</label><input type=date id=from value="${fy.from}"></div><div><label>To / As of</label><input type=date id=to value="${META.today}"></div>
+<div><label>Report</label><select id=rt><option value=pnl>Profit &amp; Loss</option><option value=bs>Balance Sheet</option><option value=tb>Trial Balance</option><option value=cs>Client-wise Summary</option><option value=lg>Account Ledger</option></select></div>
+<div id=acw style="display:none"><label>Account</label><select id=ac>${opts(META.accounts.map(a=>({c:a[0],n:a[0]+' '+a[1]})),'c','n')}</select></div>
+<button class=b id=go>Dikhao</button><button class="b s" onclick=print()>Print</button></div></div><div class=card id=out></div>`;
+const t=(rows)=>rows.map(([n,v,b])=>`<tr><td>${b?'<b>'+esc(n)+'</b>':esc(n)}</td><td class=r>${b?'<b>':''}${inr(v)}${b?'</b>':''}</td></tr>`).join('');
+$('#rt').onchange=()=>$('#acw').style.display=$('#rt').value==='lg'?'':'none';
+$('#go').onclick=guard(async()=>{const f=$('#from').value,to=$('#to').value,k=$('#rt').value,o=$('#out');
+if(k==='pnl'){const d=await api(`/api/reports/pnl?from=${f}&to=${to}`);o.innerHTML=`<h2>Profit &amp; Loss: ${d.from} to ${d.to}</h2><table><tr><th colspan=2>Income</th></tr>${t(d.income.map(r=>[r.name,r.amount]))}${t([['Total income',d.total_income,1]])}
+<tr><th colspan=2>Expenses</th></tr>${t(d.expenses.map(r=>[r.name,r.amount]))}${t([['Total expenses',d.total_expenses,1],[d.net_profit<0?'Net LOSS':'Net PROFIT',d.net_profit,1]])}</table>`;}
+else if(k==='bs'){const d=await api('/api/reports/balance-sheet?asof='+to);o.innerHTML=`<h2>Balance Sheet as on ${d.asof}</h2><p class="${d.balanced?'ok':'no'}">${d.balanced?'✓ Balanced':'✗ NOT balanced'}</p>
+<div class=g><table><tr><th colspan=2>Assets</th></tr>${t(d.assets.map(r=>[r.name,r.amount]))}${t([['Total assets',d.total_assets,1]])}</table>
+<table><tr><th colspan=2>Liabilities</th></tr>${t(d.liabilities.map(r=>[r.name,r.amount]))}${t([['Total liabilities',d.total_liabilities,1]])}<tr><th colspan=2>Equity</th></tr>${t(d.equity.map(r=>[r.name,r.amount]))}${t([['Total liabilities + equity',d.total_liabilities+d.total_equity,1]])}</table></div>`;}
+else if(k==='tb'){const d=await api('/api/reports/trial-balance?asof='+to);o.innerHTML=`<h2>Trial Balance as on ${d.asof}</h2><p class="${d.balanced?'ok':'no'}">${d.balanced?'✓ Debit = Credit':'✗ Mismatch'}</p>
+<table><tr><th>Code</th><th>Account</th><th class=r>Debit</th><th class=r>Credit</th></tr>${d.rows.map(r=>`<tr><td>${r.code}</td><td>${esc(r.name)}</td><td class=r>${r.debit?inr(r.debit):''}</td><td class=r>${r.credit?inr(r.credit):''}</td></tr>`).join('')}
+<tr><th></th><th>Total</th><th class=r>${inr(d.total_debit)}</th><th class=r>${inr(d.total_credit)}</th></tr></table>`;}
+else if(k==='cs'){const d=await api(`/api/reports/clients?from=${f}&to=${to}`);o.innerHTML=`<h2>Client-wise: ${f} to ${to}</h2><table><tr><th>Client</th><th class=r>Invoices</th><th class=r>Billed</th><th class=r>Received</th><th class=r>Outstanding</th></tr>${d.map(r=>`<tr><td>${esc(r.name)}</td><td class=r>${r.invoices}</td><td class=r>${inr(r.billed_paise)}</td><td class=r>${inr(r.received_paise)}</td><td class=r>${inr(r.outstanding_paise)}</td></tr>`).join('')}</table>`;}
+else{const d=await api(`/api/reports/ledger?account=${$('#ac').value}&from=${f}&to=${to}`);o.innerHTML=`<h2>Ledger: ${esc(d.account.name)}</h2><p>Opening: ${inr(d.opening)}</p><table><tr><th>Date</th><th>Narration</th><th class=r>Debit</th><th class=r>Credit</th><th class=r>Balance</th></tr>${d.rows.map(r=>`<tr><td>${r.date}</td><td>${esc(r.narration)}</td><td class=r>${r.debit?inr(r.debit):''}</td><td class=r>${r.credit?inr(r.credit):''}</td><td class=r>${inr(r.balance)}</td></tr>`).join('')}</table><p>Closing: <b>${inr(d.closing)}</b></p>`;}});
+$('#go').click();}
+
+async function set(){V.innerHTML=`<div class=card><h2>Company settings</h2><div class=g id=f><div><label>Company naam</label><input name=company_name value="${esc(S.company_name)}"></div>
+<div><label>State</label><select name=state_code>${stateOpts(S.state_code)}</select></div><div><label>GSTIN</label><input name=gstin maxlength=15 value="${esc(S.gstin)}"></div>
+<div><label>GST registered?</label><select name=gst_enabled><option value=1${S.gst_enabled==='1'?' selected':''}>Haan (Tax Invoice)</option><option value=0${S.gst_enabled==='0'?' selected':''}>Nahi (Bill of Supply)</option></select></div>
+<div><label>Invoice prefix</label><input name=invoice_prefix value="${esc(S.invoice_prefix)}"></div><div><label>Default due days</label><input type=number name=default_due_days value="${esc(S.default_due_days)}"></div>
+<div><label>Address</label><textarea name=address rows=2>${esc(S.address)}</textarea></div><div><label>Bank details (invoice par dikhenge)</label><textarea name=bank_details rows=2>${esc(S.bank_details)}</textarea></div></div>
+<p><button class=b id=s>Save</button></p></div>`;
+$('#s').onclick=guard(async()=>{S=await api('/api/settings','PUT',form($('#f')));toast('Settings save ho gayi');});}
+
+(async()=>{try{[META,S]=await Promise.all([api('/api/meta'),api('/api/settings')]);go(location.hash.slice(1) in tabs?location.hash.slice(1):'dash');}catch(e){V.textContent=e.message}})();
+</script></body></html>
