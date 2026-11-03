@@ -1,0 +1,9 @@
+node_modules
+out
+.DS_Store
+.env
+.venv
+tools/.venv
+__pycache__
+*.zip
+.git
