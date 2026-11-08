@@ -1,1 +1,417 @@
-[]
+[
+  {
+    "word": "Ye",
+    "start": 0.25,
+    "end": 0.438
+  },
+  {
+    "word": "jeans",
+    "start": 0.458,
+    "end": 0.854
+  },
+  {
+    "word": "dekhi?",
+    "start": 0.874,
+    "end": 1.271
+  },
+  {
+    "word": "Sab",
+    "start": 1.451,
+    "end": 1.692
+  },
+  {
+    "word": "yahi",
+    "start": 1.712,
+    "end": 2.084
+  },
+  {
+    "word": "pooch",
+    "start": 2.104,
+    "end": 2.476
+  },
+  {
+    "word": "rahe",
+    "start": 2.496,
+    "end": 2.868
+  },
+  {
+    "word": "ho!",
+    "start": 2.888,
+    "end": 3.129
+  },
+  {
+    "word": "Aaj",
+    "start": 3.309,
+    "end": 3.495
+  },
+  {
+    "word": "iska",
+    "start": 3.515,
+    "end": 3.909
+  },
+  {
+    "word": "honest",
+    "start": 3.929,
+    "end": 4.528
+  },
+  {
+    "word": "review.",
+    "start": 4.548,
+    "end": 5.148
+  },
+  {
+    "word": "Pehli",
+    "start": 5.328,
+    "end": 5.757
+  },
+  {
+    "word": "baat,",
+    "start": 5.777,
+    "end": 6.094
+  },
+  {
+    "word": "fit.",
+    "start": 6.114,
+    "end": 6.43
+  },
+  {
+    "word": "Wide-leg",
+    "start": 6.61,
+    "end": 7.38
+  },
+  {
+    "word": "hai,",
+    "start": 7.4,
+    "end": 7.577
+  },
+  {
+    "word": "ekdum",
+    "start": 7.597,
+    "end": 7.972
+  },
+  {
+    "word": "loose,",
+    "start": 7.992,
+    "end": 8.366
+  },
+  {
+    "word": "poora",
+    "start": 8.386,
+    "end": 8.761
+  },
+  {
+    "word": "din",
+    "start": 8.781,
+    "end": 9.057
+  },
+  {
+    "word": "comfy.",
+    "start": 9.077,
+    "end": 9.649
+  },
+  {
+    "word": "Doosri",
+    "start": 9.829,
+    "end": 10.321
+  },
+  {
+    "word": "baat,",
+    "start": 10.341,
+    "end": 10.629
+  },
+  {
+    "word": "butterfly",
+    "start": 10.649,
+    "end": 11.551
+  },
+  {
+    "word": "patches.",
+    "start": 11.571,
+    "end": 12.064
+  },
+  {
+    "word": "Plain",
+    "start": 12.244,
+    "end": 12.689
+  },
+  {
+    "word": "jeans",
+    "start": 12.709,
+    "end": 13.061
+  },
+  {
+    "word": "se",
+    "start": 13.081,
+    "end": 13.247
+  },
+  {
+    "word": "alag",
+    "start": 13.267,
+    "end": 13.526
+  },
+  {
+    "word": "lagte",
+    "start": 13.546,
+    "end": 13.898
+  },
+  {
+    "word": "hain,",
+    "start": 13.918,
+    "end": 14.177
+  },
+  {
+    "word": "aur",
+    "start": 14.197,
+    "end": 14.363
+  },
+  {
+    "word": "photos",
+    "start": 14.383,
+    "end": 15.014
+  },
+  {
+    "word": "mein",
+    "start": 15.034,
+    "end": 15.293
+  },
+  {
+    "word": "bohot",
+    "start": 15.313,
+    "end": 15.665
+  },
+  {
+    "word": "pop",
+    "start": 15.685,
+    "end": 15.944
+  },
+  {
+    "word": "karte",
+    "start": 15.964,
+    "end": 16.316
+  },
+  {
+    "word": "hain.",
+    "start": 16.336,
+    "end": 16.595
+  },
+  {
+    "word": "Teesri",
+    "start": 16.775,
+    "end": 17.171
+  },
+  {
+    "word": "baat,",
+    "start": 17.191,
+    "end": 17.42
+  },
+  {
+    "word": "ye",
+    "start": 17.44,
+    "end": 17.586
+  },
+  {
+    "word": "pink",
+    "start": 17.606,
+    "end": 17.918
+  },
+  {
+    "word": "halter",
+    "start": 17.938,
+    "end": 18.417
+  },
+  {
+    "word": "top.",
+    "start": 18.437,
+    "end": 18.666
+  },
+  {
+    "word": "Ruched",
+    "start": 18.846,
+    "end": 19.22
+  },
+  {
+    "word": "design",
+    "start": 19.24,
+    "end": 19.909
+  },
+  {
+    "word": "hai,",
+    "start": 19.929,
+    "end": 20.106
+  },
+  {
+    "word": "aur",
+    "start": 20.126,
+    "end": 20.303
+  },
+  {
+    "word": "jeans",
+    "start": 20.323,
+    "end": 20.697
+  },
+  {
+    "word": "ke",
+    "start": 20.717,
+    "end": 20.894
+  },
+  {
+    "word": "saath",
+    "start": 20.914,
+    "end": 21.189
+  },
+  {
+    "word": "perfect",
+    "start": 21.209,
+    "end": 21.977
+  },
+  {
+    "word": "match.",
+    "start": 21.997,
+    "end": 22.273
+  },
+  {
+    "word": "Ab",
+    "start": 22.453,
+    "end": 22.625
+  },
+  {
+    "word": "sachchi",
+    "start": 22.645,
+    "end": 23.105
+  },
+  {
+    "word": "baat:",
+    "start": 23.125,
+    "end": 23.393
+  },
+  {
+    "word": "wide-leg",
+    "start": 23.413,
+    "end": 24.16
+  },
+  {
+    "word": "jeans",
+    "start": 24.18,
+    "end": 24.544
+  },
+  {
+    "word": "lambi",
+    "start": 24.564,
+    "end": 24.928
+  },
+  {
+    "word": "lagti",
+    "start": 24.948,
+    "end": 25.312
+  },
+  {
+    "word": "hain,",
+    "start": 25.332,
+    "end": 25.6
+  },
+  {
+    "word": "to",
+    "start": 25.62,
+    "end": 25.792
+  },
+  {
+    "word": "heels",
+    "start": 25.812,
+    "end": 26.272
+  },
+  {
+    "word": "ya",
+    "start": 26.292,
+    "end": 26.464
+  },
+  {
+    "word": "platform",
+    "start": 26.484,
+    "end": 27.52
+  },
+  {
+    "word": "shoes",
+    "start": 27.54,
+    "end": 27.904
+  },
+  {
+    "word": "ke",
+    "start": 27.924,
+    "end": 28.096
+  },
+  {
+    "word": "saath",
+    "start": 28.116,
+    "end": 28.384
+  },
+  {
+    "word": "pehno.",
+    "start": 28.404,
+    "end": 28.768
+  },
+  {
+    "word": "Meri",
+    "start": 28.948,
+    "end": 29.364
+  },
+  {
+    "word": "rating,",
+    "start": 29.384,
+    "end": 30.02
+  },
+  {
+    "word": "nau",
+    "start": 30.04,
+    "end": 30.238
+  },
+  {
+    "word": "out",
+    "start": 30.258,
+    "end": 30.566
+  },
+  {
+    "word": "of",
+    "start": 30.586,
+    "end": 30.894
+  },
+  {
+    "word": "das.",
+    "start": 30.914,
+    "end": 31.112
+  },
+  {
+    "word": "Link",
+    "start": 31.292,
+    "end": 31.683
+  },
+  {
+    "word": "chahiye?",
+    "start": 31.703,
+    "end": 32.197
+  },
+  {
+    "word": "Comment",
+    "start": 32.217,
+    "end": 32.711
+  },
+  {
+    "word": "LINK,",
+    "start": 32.731,
+    "end": 33.122
+  },
+  {
+    "word": "main",
+    "start": 33.142,
+    "end": 33.43
+  },
+  {
+    "word": "bhej",
+    "start": 33.45,
+    "end": 33.739
+  },
+  {
+    "word": "dungi.",
+    "start": 33.759,
+    "end": 34.252
+  }
+]
