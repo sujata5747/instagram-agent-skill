@@ -4,6 +4,7 @@ import type { ReelProps } from "../components";
 import type { Word } from "../timing";
 import { PRESETS } from "../presets";
 import * as demo from "./demo/Reel";
+import * as r_butterfly_jeans_review from "./butterfly-jeans-review/Reel";
 // <new-reel-imports>
 
 export type ReelEntry = {
@@ -26,6 +27,7 @@ export const REELS: ReelEntry[] = [
       { suffix: "SoftPastel", props: { brand: PRESETS.softPastel } },
     ],
   },
+  { id: "butterfly-jeans-review", Component: r_butterfly_jeans_review.Reel, durationInFrames: r_butterfly_jeans_review.durationInFrames },
   // <new-reel-entries>
 ];
 
